@@ -102,6 +102,8 @@ public class WifiWizard extends CordovaPlugin {
 
 
 			if (authType.equals("WPA")) {
+				Log.d(TAG, "WifiWizard: WPA authType detected.");
+
 				// WPA Data format:
 				// 0: ssid
 				// 1: auth
@@ -118,6 +120,8 @@ public class WifiWizard extends CordovaPlugin {
 				wifi.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
 				wifi.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
 				wifi.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
+		                wifi.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
+		                wifi.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
 
 				wifi.networkId = ssidToNetworkId(newSSID);
 
@@ -133,18 +137,15 @@ public class WifiWizard extends CordovaPlugin {
 				wifiManager.saveConfiguration();
 				return true;
 			}
-			else if (authType.equals("WEP")) {
-				// TODO: connect/configure for WEP
-				Log.d(TAG, "WEP unsupported.");
-				callbackContext.error("WEP unsupported");
-				return false;
-			}
 			else if (authType.equals("NONE")) {
+				Log.d(TAG, "WifiWizard: NONE authType detected.");
+
 				String newSSID = data.getString(0);
-                wifi.SSID = newSSID;
-                wifi.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
-                //
-                wifi.networkId = ssidToNetworkId(newSSID);
+		                wifi.SSID = newSSID;
+                		wifi.status = WifiConfiguration.Status.ENABLED;
+		                wifi.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+		                //
+		                wifi.networkId = ssidToNetworkId(newSSID);
 
 				if ( wifi.networkId == -1 ) {
 					wifiManager.addNetwork(wifi);
@@ -157,6 +158,45 @@ public class WifiWizard extends CordovaPlugin {
 
 				wifiManager.saveConfiguration();
 				return true;
+			}
+			else if (authType.equals("WEP")) {
+				// TODO: connect/configure for WEP
+				//Log.d(TAG, "WEP unsupported.");
+				//callbackContext.error("WEP unsupported");
+				//return false;
+				Log.d(TAG, "WifiWizard: WEP authType detected.");
+		
+		                String newSSID = data.getString(0);
+		                wifi.SSID = newSSID;
+		                wifi.wepKeys[0] = newPass; //This is the WEP Password
+		                wifi.wepTxKeyIndex = 0;
+		                wifi.hiddenSSID = true;
+		                wifi.status = WifiConfiguration.Status.DISABLED;
+		                wifi.priority = 40;
+		                wifi.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+		                wifi.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
+		                wifi.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
+		                wifi.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
+		                wifi.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.SHARED);
+		                wifi.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
+		                wifi.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
+		                wifi.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP40);
+		                wifi.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP104);
+		
+		                //
+		                wifi.networkId = ssidToNetworkId(newSSID);
+		
+		                if ( wifi.networkId == -1 ) {
+		                    wifiManager.addNetwork(wifi);
+		                    callbackContext.success(newSSID + " successfully added.");
+		                }
+		                else {
+		                    wifiManager.updateNetwork(wifi);
+		                    callbackContext.success(newSSID + " successfully updated.");
+		                }
+		
+		                wifiManager.saveConfiguration();
+		                return true;
 			}
 			// TODO: Add more authentications as necessary
 			else {
